@@ -40,9 +40,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 12px;
+      padding-bottom: 10px;
+      margin-bottom: 8px;
     }
     .brand {
       display: flex;
@@ -91,6 +90,47 @@
       50% { opacity: 0.3; transform: scale(0.85); }
     }
 
+    /* Period Selector Tabs (Today, 24h, 7D, 30D, 60D, All) */
+    .period-bar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #0d131f;
+      padding: 3px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .period-bar::-webkit-scrollbar { display: none; }
+    .period-tab {
+      flex: 1;
+      min-width: 48px;
+      text-align: center;
+      padding: 6px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .period-tab:hover {
+      color: #f3f4f6;
+      background: rgba(31, 41, 55, 0.4);
+    }
+    .period-tab.active {
+      background: #1f2937;
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.4);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.15);
+      font-weight: 700;
+    }
+
     /* KPI Grid */
     .kpi-grid {
       display: grid;
@@ -106,6 +146,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      transition: opacity 0.2s ease;
     }
     .kpi-card.span-2 {
       grid-column: span 2;
@@ -123,6 +164,7 @@
       font-weight: 800;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       color: var(--text);
+      transition: opacity 0.2s;
     }
     .kpi-sub {
       font-size: 10.5px;
@@ -313,11 +355,30 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 130px;
+      max-width: 115px;
     }
     .provider-row.active .prov-name {
       color: #34d399;
       font-weight: 700;
+    }
+    .prov-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .prov-metric {
+      font-size: 9px;
+      color: var(--text-muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      background: rgba(31, 41, 55, 0.6);
+      padding: 1px 5px;
+      border-radius: 4px;
+      display: none;
+    }
+    .provider-row.active .prov-metric {
+      color: #a7f3d0;
+      background: rgba(16, 185, 129, 0.25);
     }
     .prov-status-dot {
       width: 5.5px;
@@ -476,34 +537,44 @@
     </div>
   </div>
 
+  <!-- Period Selector Tabs (Today, 24h, 7D, 30D, 60D, All) -->
+  <div class="period-bar" id="period-bar">
+    <button class="period-tab active" data-period="today" onclick="switchPeriod('today')">Today</button>
+    <button class="period-tab" data-period="24h" onclick="switchPeriod('24h')">24h</button>
+    <button class="period-tab" data-period="7d" onclick="switchPeriod('7d')">7D</button>
+    <button class="period-tab" data-period="30d" onclick="switchPeriod('30d')">30D</button>
+    <button class="period-tab" data-period="60d" onclick="switchPeriod('60d')">60D</button>
+    <button class="period-tab" data-period="all" onclick="switchPeriod('all')">All</button>
+  </div>
+
   <!-- KPI Cards -->
   <div class="kpi-grid">
     <div class="kpi-card">
       <div class="kpi-label">Total Requests</div>
-      <div class="kpi-val" id="val-req">885</div>
-      <div class="kpi-sub">Hari ini</div>
+      <div class="kpi-val" id="val-req">970</div>
+      <div class="kpi-sub" id="sub-req">Hari ini</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Est. Cost</div>
-      <div class="kpi-val" style="color: #34d399;" id="val-cost">~$17.23</div>
+      <div class="kpi-val" style="color: #34d399;" id="val-cost">~$20.84</div>
       <div class="kpi-sub">Hemat via cache</div>
     </div>
     <div class="kpi-card span-2">
       <div style="display: flex; justify-content: space-between; align-items: baseline;">
         <div class="kpi-label">Input vs Cached Tokens</div>
-        <div style="font-size: 11px; font-weight: 700; color: #06b6d4;" id="val-cache-pct">92.4% Cache Hit</div>
+        <div style="font-size: 11px; font-weight: 700; color: #06b6d4;" id="val-cache-pct">92.2% Cache Hit</div>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px;">
-        <div style="font-size: 13.5px; font-weight: 700; font-family: monospace;" id="val-input">104,240,377</div>
-        <div style="font-size: 11.5px; color: #10b981; font-weight: 600; font-family: monospace;" id="val-cached">96,279,133 cached</div>
+        <div style="font-size: 13.5px; font-weight: 700; font-family: monospace;" id="val-input">116,682,515</div>
+        <div style="font-size: 11.5px; color: #10b981; font-weight: 600; font-family: monospace;" id="val-cached">107,622,751 cached</div>
       </div>
       <div class="cache-bar-bg">
-        <div class="cache-bar-fill" id="cache-bar" style="width: 92.4%;"></div>
+        <div class="cache-bar-fill" id="cache-bar" style="width: 92.2%;"></div>
       </div>
     </div>
     <div class="kpi-card span-2">
       <div class="kpi-label">Output Tokens</div>
-      <div class="kpi-val" style="color: #60a5fa;" id="val-output">2,822,001</div>
+      <div class="kpi-val" style="color: #60a5fa;" id="val-output">3,045,043</div>
     </div>
   </div>
 
@@ -599,6 +670,17 @@
       { id: "mimo-free", name: "MiMo Code Free" }
     ];
 
+    let currentPeriod = "today";
+
+    const PERIOD_SUB_LABELS = {
+      today: "Hari ini",
+      "24h": "24 jam terakhir",
+      "7d": "7 hari terakhir",
+      "30d": "30 hari terakhir",
+      "60d": "60 hari terakhir",
+      all: "Sepanjang masa"
+    };
+
     // State for dynamic sorting & active queue
     let priorityCounter = 100;
     let providerStates = RAW_PROVIDERS.map((p, idx) => ({
@@ -629,12 +711,41 @@
             <span class="prov-rank" id="rank-${p.id}">01</span>
             <span class="prov-name">${p.name}</span>
           </div>
-          <span class="prov-status-dot"></span>
+          <div class="prov-right">
+            <span class="prov-metric" id="metric-${p.id}"></span>
+            <span class="prov-status-dot"></span>
+          </div>
         `;
         container.appendChild(row);
       });
 
       applyOrder(false);
+    }
+
+    // Switch active period (Today, 24h, 7D, 30D, 60D, All)
+    function switchPeriod(p) {
+      if (currentPeriod === p) return;
+      currentPeriod = p;
+
+      // Update Tab Styles
+      document.querySelectorAll(".period-tab").forEach(tab => {
+        if (tab.dataset.period === p) {
+          tab.classList.add("active");
+        } else {
+          tab.classList.remove("active");
+        }
+      });
+
+      // Update Subtitle
+      document.getElementById("sub-req").textContent = PERIOD_SUB_LABELS[p] || p;
+
+      // Subtle loading fade
+      document.getElementById("val-req").style.opacity = "0.5";
+      document.getElementById("val-cost").style.opacity = "0.5";
+      document.getElementById("val-input").style.opacity = "0.5";
+      document.getElementById("val-output").style.opacity = "0.5";
+
+      updateStats();
     }
 
     // Sort providers:
@@ -808,18 +919,25 @@
       }
     }
 
-    // Fetch live statistics from 9Router local REST API
+    // Fetch live statistics from 9Router local REST API based on currentPeriod
     async function updateStats() {
       try {
-        // Try relative URL first (when served via server.py / reverse proxy), fallback to direct local port 20128
-        let endpoint = "/api/usage/stats?period=today";
-        if (window.location.protocol === "file:" || window.location.port !== "20130") {
-          endpoint = "http://127.0.0.1:20128/api/usage/stats?period=today";
+        let endpoint = `/api/usage/stats?period=${currentPeriod}`;
+        if (window.location.protocol === "file:" || (window.location.port !== "20130" && window.location.port !== "")) {
+          endpoint = `http://127.0.0.1:20128/api/usage/stats?period=${currentPeriod}`;
         }
-        const res = await fetch(endpoint).catch(() => fetch("http://127.0.0.1:20128/api/usage/stats?period=today"));
+        
+        const res = await fetch(endpoint).catch(() => fetch(`http://127.0.0.1:20128/api/usage/stats?period=${currentPeriod}`));
         if (!res.ok) return;
         const d = await res.json();
         
+        // Restore opacity
+        document.getElementById("val-req").style.opacity = "1";
+        document.getElementById("val-cost").style.opacity = "1";
+        document.getElementById("val-input").style.opacity = "1";
+        document.getElementById("val-output").style.opacity = "1";
+
+        // Update KPIs
         document.getElementById("val-req").textContent = d.totalRequests?.toLocaleString() || "0";
         document.getElementById("val-cost").textContent = "~$" + (d.totalCost || 0).toFixed(2);
         document.getElementById("val-input").textContent = d.totalPromptTokens?.toLocaleString() || "0";
@@ -831,6 +949,34 @@
           document.getElementById("val-cache-pct").textContent = pct + "% Cache Hit";
           document.getElementById("cache-bar").style.width = pct + "%";
         }
+
+        // Map provider request volume for this period onto the cards
+        const provReqCounts = {};
+        if (d.byModel) {
+          Object.values(d.byModel).forEach(m => {
+            const provName = (m.provider || "").toLowerCase();
+            provReqCounts[provName] = (provReqCounts[provName] || 0) + (m.requests || 0);
+          });
+        }
+        if (d.byProvider) {
+          Object.entries(d.byProvider).forEach(([k, v]) => {
+            provReqCounts[k.toLowerCase()] = (provReqCounts[k.toLowerCase()] || 0) + (v.requests || 0);
+          });
+        }
+
+        providerStates.forEach(p => {
+          const metricSpan = document.getElementById(`metric-${p.id}`);
+          if (metricSpan) {
+            const count = provReqCounts[p.name.toLowerCase()] || provReqCounts[p.id.toLowerCase()] || 0;
+            if (count > 0) {
+              metricSpan.textContent = count > 999 ? `${(count/1000).toFixed(1)}k req` : `${count} req`;
+              metricSpan.style.display = "inline-block";
+            } else {
+              metricSpan.textContent = "";
+              metricSpan.style.display = "none";
+            }
+          }
+        });
 
         // Detect real live active route from 9Router activeRequests / recentRequests
         if (d.activeRequests && d.activeRequests.length > 0) {
