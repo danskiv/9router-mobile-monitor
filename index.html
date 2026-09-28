@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#090d16">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>9Router Mobile Monitor</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --card-subtle: #162032;
+      --border: #1f2937;
+      --border-highlight: #374151;
+      --primary: #3b82f6;
+      --accent: #f59e0b;
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.4);
+      --wire-gray: #374151;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      padding: 12px;
+      max-width: 480px;
+      margin: 0 auto;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #f59e0b, #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 13px;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+    }
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      color: #34d399;
+      font-weight: 600;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #34d399;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(0.85); }
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .kpi-card.span-2 {
+      grid-column: span 2;
+    }
+    .kpi-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+    .kpi-val {
+      font-size: 17px;
+      font-weight: 800;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: var(--text);
+    }
+    .kpi-sub {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+    .cache-bar-bg {
+      width: 100%;
+      height: 5px;
+      background: #1f2937;
+      border-radius: 4px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+    .cache-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #06b6d4);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    /* Topology Circuit Section */
+    .route-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .route-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+    .route-sub-badge {
+      font-size: 10px;
+      color: #10b981;
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 2px 7px;
+      border-radius: 6px;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    /* Circuit Board Container */
+    .circuit-scroll-frame {
+      position: relative;
+      height: 380px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      border: 1px solid rgba(55, 65, 81, 0.4);
+      border-radius: 10px;
+      background: #0d131f;
+      padding: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: #374151 transparent;
+    }
+    .circuit-scroll-frame::-webkit-scrollbar {
+      width: 4px;
+    }
+    .circuit-scroll-frame::-webkit-scrollbar-thumb {
+      background: #374151;
+      border-radius: 4px;
+    }
+
+    .circuit-stage {
+      position: relative;
+      width: 100%;
+      min-height: 820px;
+    }
+
+    /* SVG Overlay for orthogonal wires */
+    .circuit-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* 9Router Left Node (At the top, aligned with Provider #1) */
+    .router-node-box {
+      position: absolute;
+      left: 6px;
+      top: 10px;
+      width: 84px;
+      height: 32px;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.98));
+      border: 1.5px solid #f59e0b;
+      border-radius: 7px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.25);
+      z-index: 4;
+      transition: all 0.3s ease;
+    }
+    .router-node-box.pulsing {
+      border-color: #fbbf24;
+      box-shadow: 0 0 18px rgba(245, 158, 11, 0.5), inset 0 0 8px rgba(245, 158, 11, 0.2);
+    }
+    .router-node-label {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #fbbf24;
+      letter-spacing: -0.2px;
+    }
+    .router-node-sub {
+      font-size: 8px;
+      font-weight: 700;
+      background: rgba(245, 158, 11, 0.2);
+      color: #fde68a;
+      padding: 1px 4px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    /* Provider Right List (Dynamic Sliding Rows) */
+    .provider-list-col {
+      position: absolute;
+      left: 140px;
+      right: 6px;
+      top: 0;
+      bottom: 0;
+      z-index: 2;
+    }
+
+    .provider-row {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 32px;
+      padding: 0 8px;
+      background: rgba(17, 24, 39, 0.88);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      /* Silky smooth sliding transition when re-ordered */
+      transition: top 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+    .provider-row:hover {
+      border-color: var(--border-highlight);
+      background: rgba(31, 41, 55, 0.9);
+    }
+    .provider-row.active {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.16);
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
+      z-index: 3;
+    }
+    .prov-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+    }
+    .prov-rank {
+      font-size: 9px;
+      font-weight: 700;
+      color: #6b7280;
+      width: 14px;
+      text-align: center;
+      font-family: monospace;
+    }
+    .provider-row.active .prov-rank {
+      color: #10b981;
+    }
+    .prov-name {
+      font-weight: 600;
+      color: #d1d5db;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 130px;
+    }
+    .provider-row.active .prov-name {
+      color: #34d399;
+      font-weight: 700;
+    }
+    .prov-status-dot {
+      width: 5.5px;
+      height: 5.5px;
+      border-radius: 50%;
+      background: #4b5563;
+      flex-shrink: 0;
+    }
+    .provider-row.active .prov-status-dot {
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse 1s infinite;
+    }
+
+    /* Simulation Control Bar */
+    .sim-bar {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      overflow-x: auto;
+      padding-top: 8px;
+      margin-top: 8px;
+      border-top: 1px dashed var(--border);
+      scrollbar-width: none;
+    }
+    .sim-bar::-webkit-scrollbar { display: none; }
+    .sim-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    .sim-btn {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      background: #1f2937;
+      color: #cbd5e1;
+      border: 1px solid #374151;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .sim-btn:hover, .sim-btn.active {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: #10b981;
+      color: #34d399;
+    }
+    .sim-btn.off {
+      background: #374151;
+      color: #94a3b8;
+    }
+
+    /* Recent Requests */
+    .requests-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .req-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .req-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 10px;
+      background: rgba(31, 41, 55, 0.4);
+      border-radius: 7px;
+      border: 1px solid rgba(75, 85, 99, 0.15);
+      font-size: 11.5px;
+    }
+    .req-left {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      overflow: hidden;
+    }
+    .req-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background-color: var(--success);
+      flex-shrink: 0;
+    }
+    .req-model {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: #e5e7eb;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 140px;
+    }
+    .req-right {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+    .token-in { color: #f59e0b; font-weight: 600; font-size: 11px; }
+    .token-out { color: #10b981; font-weight: 600; font-size: 11px; }
+    .req-time {
+      font-size: 10px;
+      color: var(--text-muted);
+      min-width: 42px;
+      text-align: right;
+    }
+
+    /* Animated Circuit Wires */
+    .wire-gray {
+      stroke: #374151;
+      stroke-width: 1.5;
+      fill: none;
+      transition: stroke 0.3s ease;
+    }
+    .wire-active-base {
+      stroke: #10b981;
+      stroke-width: 2.2;
+      fill: none;
+      filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.8));
+    }
+    .wire-active-flow {
+      stroke: #6ee7b7;
+      stroke-width: 2.5;
+      stroke-dasharray: 6 10;
+      fill: none;
+      animation: circuitBeam 0.7s linear infinite;
+    }
+    @keyframes circuitBeam {
+      from { stroke-dashoffset: 16; }
+      to { stroke-dashoffset: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <div class="header">
+    <div class="brand">
+      <div class="brand-icon">9R</div>
+      <div>
+        <div class="brand-title">9Router Mobile Monitor</div>
+      </div>
+    </div>
+    <div class="status-badge">
+      <span class="status-dot"></span>
+      <span id="gateway-status">ONLINE • 20128</span>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Requests</div>
+      <div class="kpi-val" id="val-req">885</div>
+      <div class="kpi-sub">Hari ini</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Est. Cost</div>
+      <div class="kpi-val" style="color: #34d399;" id="val-cost">~$17.23</div>
+      <div class="kpi-sub">Hemat via cache</div>
+    </div>
+    <div class="kpi-card span-2">
+      <div style="display: flex; justify-content: space-between; align-items: baseline;">
+        <div class="kpi-label">Input vs Cached Tokens</div>
+        <div style="font-size: 11px; font-weight: 700; color: #06b6d4;" id="val-cache-pct">92.4% Cache Hit</div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px;">
+        <div style="font-size: 13.5px; font-weight: 700; font-family: monospace;" id="val-input">104,240,377</div>
+        <div style="font-size: 11.5px; color: #10b981; font-weight: 600; font-family: monospace;" id="val-cached">96,279,133 cached</div>
+      </div>
+      <div class="cache-bar-bg">
+        <div class="cache-bar-fill" id="cache-bar" style="width: 92.4%;"></div>
+      </div>
+    </div>
+    <div class="kpi-card span-2">
+      <div class="kpi-label">Output Tokens</div>
+      <div class="kpi-val" style="color: #60a5fa;" id="val-output">2,822,001</div>
+    </div>
+  </div>
+
+  <!-- Topology Section (9Router top-left aligned with provider #1, dynamic sliding queue) -->
+  <div class="route-section">
+    <div class="route-header">
+      <div class="section-title">Active Route & Topology</div>
+      <span class="route-sub-badge" id="active-summary">Active: Antigravity 🟢</span>
+    </div>
+
+    <!-- Circuit Scroll Frame -->
+    <div class="circuit-scroll-frame" id="circuit-frame">
+      <div class="circuit-stage" id="circuit-stage">
+        
+        <!-- SVG Canvas for Orthogonal Connectors -->
+        <svg class="circuit-svg" id="circuit-svg">
+          <defs>
+            <!-- Gray Arrowhead for Inactive Lines -->
+            <marker id="arrow-gray" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+              <path d="M 0 1 L 6 4 L 0 7 z" fill="#4b5563" />
+            </marker>
+            <!-- Bright Green Arrowhead for Active Line -->
+            <marker id="arrow-green" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 6 4 L 0 7 z" fill="#10b981" />
+            </marker>
+          </defs>
+          <g id="inactive-wires-group"></g>
+          <g id="active-wire-group"></g>
+        </svg>
+
+        <!-- 9Router Node (Top Left, aligned horizontally with Slot 0) -->
+        <div class="router-node-box pulsing" id="router-box">
+          <span class="router-node-label">9Router</span>
+          <span class="router-node-sub">Core</span>
+        </div>
+
+        <!-- Registered Providers List (Right Side, sliding positions) -->
+        <div class="provider-list-col" id="provider-list-col">
+          <!-- Populated and dynamically repositioned by JS -->
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Quick Simulation & Route Shift Bar -->
+    <div class="sim-bar">
+      <span class="sim-label">Tes Geser Rute:</span>
+      <button class="sim-btn active" onclick="simulateActive('Antigravity')">+ Antigravity</button>
+      <button class="sim-btn" onclick="simulateActive('Kenari AI')">+ Kenari</button>
+      <button class="sim-btn" onclick="simulateActive('Hive AI')">+ Hive</button>
+      <button class="sim-btn" onclick="simulateActive('OpenRouter')">+ OpenRouter</button>
+      <button class="sim-btn" onclick="simulateActive('Groq')">+ Groq</button>
+      <button class="sim-btn" onclick="simulateActive('CodeCraft')">+ CodeCraft</button>
+      <button class="sim-btn" onclick="simulateActive('TokenHarbor')">+ TokenHarbor</button>
+      <button class="sim-btn off" onclick="deactivateTop()">- Matikan Top</button>
+    </div>
+  </div>
+
+  <!-- Recent Requests Section -->
+  <div class="requests-section">
+    <div class="route-header">
+      <div class="section-title">Recent Requests (Live)</div>
+      <span style="font-size: 10px; color: #10b981;">Auto-refreshing</span>
+    </div>
+    <div class="req-list" id="req-list">
+      <!-- Live or cached entries -->
+    </div>
+  </div>
+
+  <script>
+    // Registered Providers (Full 21 Catalog)
+    const RAW_PROVIDERS = [
+      { id: "antigravity", name: "Antigravity" },
+      { id: "kenari", name: "Kenari AI" },
+      { id: "hive", name: "Hive AI" },
+      { id: "openrouter", name: "OpenRouter" },
+      { id: "groq", name: "Groq" },
+      { id: "mistral", name: "Mistral" },
+      { id: "nvidia", name: "NVIDIA NIM" },
+      { id: "tokenhub", name: "Tencent TokenHub" },
+      { id: "cliproxy", name: "cliproxy" },
+      { id: "tokenharbor", name: "TokenHarbor" },
+      { id: "cutad", name: "Cutad AI" },
+      { id: "codecraft", name: "CodeCraft" },
+      { id: "atria", name: "Atria AI" },
+      { id: "xpl2", name: "Experiential Labs 2" },
+      { id: "apmix", name: "Apmix" },
+      { id: "mdrouter", name: "MdRouter" },
+      { id: "cssm", name: "CSSM API" },
+      { id: "omo", name: "omo" },
+      { id: "omop", name: "OMOP HUB" },
+      { id: "opencode-free", name: "OpenCode Free" },
+      { id: "mimo-free", name: "MiMo Code Free" }
+    ];
+
+    // State for dynamic sorting & active queue
+    let priorityCounter = 100;
+    let providerStates = RAW_PROVIDERS.map((p, idx) => ({
+      ...p,
+      active: p.name === "Antigravity",
+      activeTimestamp: p.name === "Antigravity" ? Date.now() : 0,
+      priority: p.name === "Antigravity" ? 1000 : (100 - idx),
+      originalIndex: idx
+    }));
+
+    const ROW_HEIGHT = 32;
+    const ROW_GAP = 6;
+    const ROW_PITCH = ROW_HEIGHT + ROW_GAP; // 38px
+    const TOP_OFFSET = 10; // 9Router top is 10px, Slot 0 is 10px -> EXACT ALIGNMENT!
+
+    // Build DOM elements for each provider once
+    function initProvidersDOM() {
+      const container = document.getElementById("provider-list-col");
+      container.innerHTML = "";
+
+      providerStates.forEach((p) => {
+        const row = document.createElement("div");
+        row.className = "provider-row";
+        row.id = `row-${p.id}`;
+        row.onclick = () => simulateActive(p.name);
+        row.innerHTML = `
+          <div class="prov-left">
+            <span class="prov-rank" id="rank-${p.id}">01</span>
+            <span class="prov-name">${p.name}</span>
+          </div>
+          <span class="prov-status-dot"></span>
+        `;
+        container.appendChild(row);
+      });
+
+      applyOrder(false);
+    }
+
+    // Sort providers:
+    // 1. Active providers come FIRST, sorted by activeTimestamp descending (newest on top).
+    // 2. Inactive providers come next, sorted by their original order or last used.
+    function getSortedProviders() {
+      return [...providerStates].sort((a, b) => {
+        if (a.active && !b.active) return -1;
+        if (!a.active && b.active) return 1;
+        if (a.active && b.active) {
+          return b.activeTimestamp - a.activeTimestamp; // newest active at the top (#1)
+        }
+        return a.originalIndex - b.originalIndex;
+      });
+    }
+
+    // Apply sorted positions to DOM with sliding transition
+    function applyOrder(animateWires = true) {
+      const sorted = getSortedProviders();
+      const activeCount = sorted.filter(p => p.active).length;
+
+      // Update badge summary
+      if (activeCount > 0) {
+        const topActive = sorted[0];
+        document.getElementById("active-summary").textContent = `Active: ${topActive.name} 🟢 (${activeCount} running)`;
+      } else {
+        document.getElementById("active-summary").textContent = `Standby • No active in-flight`;
+      }
+
+      // Update position of each card
+      sorted.forEach((p, slotIndex) => {
+        const row = document.getElementById(`row-${p.id}`);
+        const rankSpan = document.getElementById(`rank-${p.id}`);
+        if (!row) return;
+
+        const targetTop = TOP_OFFSET + slotIndex * ROW_PITCH;
+        row.style.top = `${targetTop}px`;
+
+        if (rankSpan) {
+          rankSpan.textContent = String(slotIndex + 1).padStart(2, "0");
+        }
+
+        if (p.active) {
+          row.classList.add("active");
+        } else {
+          row.classList.remove("active");
+        }
+      });
+
+      // Adjust total stage height
+      const totalH = TOP_OFFSET + sorted.length * ROW_PITCH + 10;
+      document.getElementById("circuit-stage").style.height = `${totalH}px`;
+
+      // Animate circuit lines over the 450ms sliding transition
+      if (animateWires) {
+        animateWireTransition(450);
+      } else {
+        drawCircuitLines();
+      }
+    }
+
+    // Redraw SVG wires smoothly during CSS card sliding transition
+    let wireAnimTimer = null;
+    function animateWireTransition(durationMs) {
+      if (wireAnimTimer) cancelAnimationFrame(wireAnimTimer);
+      const start = performance.now();
+      function step(now) {
+        drawCircuitLines();
+        if (now - start < durationMs) {
+          wireAnimTimer = requestAnimationFrame(step);
+        } else {
+          drawCircuitLines();
+        }
+      }
+      wireAnimTimer = requestAnimationFrame(step);
+    }
+
+    // Draw Orthogonal Circuit Lines
+    // 9Router is at top left: (x=90, y=26).
+    // Slot 0 is at top right: (x=138, y=26) -> EXACT HORIZONTAL STRAIGHT LINE!
+    // Other slots (1..N) branch down orthogonally via bus at x=114!
+    function drawCircuitLines() {
+      const inactiveGroup = document.getElementById("inactive-wires-group");
+      const activeGroup = document.getElementById("active-wire-group");
+      if (!inactiveGroup || !activeGroup) return;
+
+      inactiveGroup.innerHTML = "";
+      activeGroup.innerHTML = "";
+
+      const routerRightX = 90;
+      const routerExitY = TOP_OFFSET + (ROW_HEIGHT / 2); // 10 + 16 = 26px
+      const busX = 114;
+      const providerEntryX = 138;
+
+      const sorted = getSortedProviders();
+
+      sorted.forEach((p, slotIndex) => {
+        const rowCenterY = TOP_OFFSET + slotIndex * ROW_PITCH + (ROW_HEIGHT / 2);
+
+        // Path geometry
+        let d = "";
+        if (Math.abs(rowCenterY - routerExitY) < 1) {
+          // Slot 0: EXACT STRAIGHT HORIZONTAL LINE! NO DIAGONAL, NO BENDS!
+          d = `M ${routerRightX} ${routerExitY} H ${providerEntryX}`;
+        } else {
+          // Slots 1..N: Strict 90-degree orthogonal bus line!
+          d = `M ${routerRightX} ${routerExitY} H ${busX} V ${rowCenterY} H ${providerEntryX}`;
+        }
+
+        if (p.active) {
+          // 1. Solid emerald base line
+          const baseWire = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          baseWire.setAttribute("d", d);
+          baseWire.setAttribute("class", "wire-active-base");
+          baseWire.setAttribute("marker-end", "url(#arrow-green)");
+          activeGroup.appendChild(baseWire);
+
+          // 2. Animated pulse flow beam
+          const flowWire = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          flowWire.setAttribute("d", d);
+          flowWire.setAttribute("class", "wire-active-flow");
+          activeGroup.appendChild(flowWire);
+
+          // 3. Arrowhead particle traveling along the path
+          const traveler = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+          traveler.setAttribute("points", "0,1 7,4 0,7");
+          traveler.setAttribute("fill", "#6ee7b7");
+          traveler.setAttribute("filter", "drop-shadow(0 0 3px #10b981)");
+
+          const anim = document.createElementNS("http://www.w3.org/2000/svg", "animateMotion");
+          anim.setAttribute("dur", "0.85s");
+          anim.setAttribute("repeatCount", "indefinite");
+          anim.setAttribute("path", d);
+          anim.setAttribute("rotate", "auto");
+          traveler.appendChild(anim);
+          activeGroup.appendChild(traveler);
+
+        } else {
+          // Inactive gray wire
+          const wire = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          wire.setAttribute("d", d);
+          wire.setAttribute("class", "wire-gray");
+          wire.setAttribute("marker-end", "url(#arrow-gray)");
+          inactiveGroup.appendChild(wire);
+        }
+      });
+    }
+
+    // Trigger an active provider (slides to top!)
+    function simulateActive(name) {
+      const p = providerStates.find(x => x.name.toLowerCase() === name.toLowerCase());
+      if (!p) return;
+
+      p.active = true;
+      p.activeTimestamp = ++priorityCounter; // newer priority = moves to position #1
+
+      // Auto-scroll frame to top so the newly elevated active card is in full view
+      const frame = document.getElementById("circuit-frame");
+      if (frame) frame.scrollTo({ top: 0, behavior: "smooth" });
+
+      applyOrder(true);
+    }
+
+    // Turn off the currently top-most active provider (next active takes over!)
+    function deactivateTop() {
+      const sorted = getSortedProviders();
+      const topActive = sorted.find(p => p.active);
+      if (topActive) {
+        topActive.active = false;
+        applyOrder(true);
+      }
+    }
+
+    // Fetch live statistics from 9Router local REST API
+    async function updateStats() {
+      try {
+        // Try relative URL first (when served via server.py / reverse proxy), fallback to direct local port 20128
+        let endpoint = "/api/usage/stats?period=today";
+        if (window.location.protocol === "file:" || window.location.port !== "20130") {
+          endpoint = "http://127.0.0.1:20128/api/usage/stats?period=today";
+        }
+        const res = await fetch(endpoint).catch(() => fetch("http://127.0.0.1:20128/api/usage/stats?period=today"));
+        if (!res.ok) return;
+        const d = await res.json();
+        
+        document.getElementById("val-req").textContent = d.totalRequests?.toLocaleString() || "0";
+        document.getElementById("val-cost").textContent = "~$" + (d.totalCost || 0).toFixed(2);
+        document.getElementById("val-input").textContent = d.totalPromptTokens?.toLocaleString() || "0";
+        document.getElementById("val-cached").textContent = (d.totalCachedTokens?.toLocaleString() || "0") + " cached";
+        document.getElementById("val-output").textContent = d.totalCompletionTokens?.toLocaleString() || "0";
+
+        if (d.totalPromptTokens > 0) {
+          const pct = ((d.totalCachedTokens / d.totalPromptTokens) * 100).toFixed(1);
+          document.getElementById("val-cache-pct").textContent = pct + "% Cache Hit";
+          document.getElementById("cache-bar").style.width = pct + "%";
+        }
+
+        // Detect real live active route from 9Router activeRequests / recentRequests
+        if (d.activeRequests && d.activeRequests.length > 0) {
+          d.activeRequests.forEach(act => {
+            const raw = (act.provider || act.model || "").toLowerCase();
+            const match = providerStates.find(p => raw.includes(p.id) || raw.includes(p.name.toLowerCase()));
+            if (match && (!match.active || match.activeTimestamp < Date.now() - 5000)) {
+              match.active = true;
+              match.activeTimestamp = ++priorityCounter;
+            }
+          });
+          applyOrder(true);
+        } else if (d.recentRequests && d.recentRequests.length > 0) {
+          const latest = d.recentRequests[0];
+          const diff = (Date.now() - new Date(latest.timestamp)) / 1000;
+          if (diff < 20) { // recently active within 20s
+            const raw = (latest.provider || latest.model || "").toLowerCase();
+            const match = providerStates.find(p => raw.includes(p.id) || raw.includes(p.name.toLowerCase()));
+            if (match && !match.active) {
+              match.active = true;
+              match.activeTimestamp = ++priorityCounter;
+              applyOrder(true);
+            }
+          }
+        }
+
+        // Update Recent Requests List
+        if (d.recentRequests && d.recentRequests.length > 0) {
+          const list = document.getElementById("req-list");
+          list.innerHTML = "";
+          d.recentRequests.slice(0, 10).forEach(r => {
+            const row = document.createElement("div");
+            row.className = "req-card";
+            const diff = Math.floor((Date.now() - new Date(r.timestamp)) / 1000);
+            let timeStr = diff < 60 ? `${diff}s ago` : `${Math.floor(diff/60)}m ago`;
+            row.innerHTML = `
+              <div class="req-left">
+                <span class="req-dot" style="background-color: ${r.status === 'ok' ? '#10b981' : '#ef4444'}"></span>
+                <span class="req-model" title="${r.model}">${r.model}</span>
+              </div>
+              <div class="req-right">
+                <span class="token-in">${r.promptTokens?.toLocaleString()}↑</span>
+                <span class="token-out">${r.completionTokens?.toLocaleString()}↓</span>
+                <span class="req-time">${timeStr}</span>
+              </div>
+            `;
+            list.appendChild(row);
+          });
+        }
+      } catch (e) {
+        // Preview mode fallback
+      }
+    }
+
+    // Initialize layout and polling
+    window.addEventListener("DOMContentLoaded", () => {
+      initProvidersDOM();
+      updateStats();
+      setInterval(updateStats, 5000);
+      window.addEventListener("resize", () => drawCircuitLines());
+    });
+  </script>
+</body>
+</html>
