@@ -102,17 +102,19 @@ After=network.target
 
 [Service]
 Type=simple
-User=ubuntu
-WorkingDirectory=/home/ubuntu/Github/9router-mobile-monitor
-ExecStart=/usr/bin/python3 /home/ubuntu/Github/9router-mobile-monitor/server.py
+User=<your-username>
+WorkingDirectory=/path/to/9router-mobile-monitor
+ExecStart=/usr/bin/python3 /path/to/9router-mobile-monitor/server.py
 Restart=always
 RestartSec=3
-Environment=PORT=20130
-Environment=NINE_ROUTER_URL=http://127.0.0.1:20128
+Environment="PORT=20130"
+Environment="NINE_ROUTER_URL=http://127.0.0.1:20128"
 
 [Install]
 WantedBy=multi-user.target
 ```
+
+> **Note:** Replace `<your-username>` with your actual Linux user (e.g. `$(whoami)`) and `/path/to/9router-mobile-monitor` with the absolute path where you cloned this repository (e.g. `$PWD`).
 
 Enable and start the service:
 
