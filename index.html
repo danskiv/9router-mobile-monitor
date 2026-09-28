@@ -7,6 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>9Router Mobile Monitor</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
   <style>
     :root {
@@ -1031,12 +1033,17 @@
       }
     }
 
-    // Initialize layout and polling
+    // Initialize layout, service worker, and polling
     window.addEventListener("DOMContentLoaded", () => {
       initProvidersDOM();
       updateStats();
       setInterval(updateStats, 5000);
       window.addEventListener("resize", () => drawCircuitLines());
+
+      // Register PWA Service Worker
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      }
     });
   </script>
 </body>
