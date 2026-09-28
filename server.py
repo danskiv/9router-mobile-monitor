@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 9Router Mobile Monitor Micro-Server
-Serves the mobile-first dashboard and proxies API requests to 9Router on port 20128.
+Serves the mobile-first dashboard and proxies API requests (including SSE stream) to 9Router on port 20128.
 Standard library only - zero external dependencies.
 """
 
@@ -9,7 +9,7 @@ import sys
 import os
 import urllib.request
 import urllib.error
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 
 PORT = int(os.environ.get("PORT", 20130))
 HOST = os.environ.get("HOST", "0.0.0.0")
@@ -21,12 +21,37 @@ class ProxyHandler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=DOC_ROOT, **kwargs)
 
     def do_GET(self):
-        # Proxy /api/usage/* to local 9Router instance
-        if self.path.startswith("/api/usage/"):
+        # 1. Real-time SSE Stream proxying
+        if self.path.startswith("/api/usage/stream"):
             target_url = f"{NINE_ROUTER_BASE}{self.path}"
             try:
                 req = urllib.request.Request(target_url)
-                # Forward query parameters and headers
+                for header in ["Accept", "User-Agent"]:
+                    if header in self.headers:
+                        req.add_header(header, self.headers[header])
+                
+                with urllib.request.urlopen(req, timeout=3600) as resp:
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/event-stream")
+                    self.send_header("Cache-Control", "no-cache")
+                    self.send_header("Connection", "keep-alive")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    while True:
+                        line = resp.readline()
+                        if not line:
+                            break
+                        self.wfile.write(line)
+                        self.wfile.flush()
+            except Exception:
+                pass
+            return
+
+        # 2. General /api/* REST proxying (e.g. /api/usage/stats, /api/providers, /api/provider-nodes)
+        if self.path.startswith("/api/"):
+            target_url = f"{NINE_ROUTER_BASE}{self.path}"
+            try:
+                req = urllib.request.Request(target_url)
                 for header in ["Accept", "User-Agent"]:
                     if header in self.headers:
                         req.add_header(header, self.headers[header])
@@ -53,7 +78,7 @@ class ProxyHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(f'{{"error":"Gateway proxy error","detail":"{str(e)}"}}'.encode())
             return
 
-        # Default static file serving
+        # 3. Default static file serving
         if self.path == "/" or self.path == "":
             self.path = "/index.html"
             
@@ -67,9 +92,9 @@ class ProxyHandler(SimpleHTTPRequestHandler):
 
 def run():
     server_address = (HOST, PORT)
-    httpd = HTTPServer(server_address, ProxyHandler)
+    httpd = ThreadingHTTPServer(server_address, ProxyHandler)
     print(f"⚔️ 9Router Mobile Monitor Server listening on http://{HOST}:{PORT}")
-    print(f"⚔️ Proxying 9Router API from {NINE_ROUTER_BASE}")
+    print(f"⚔️ Proxying 9Router API & SSE from {NINE_ROUTER_BASE}")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
