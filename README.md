@@ -1,84 +1,155 @@
 # 9Router Mobile Monitor
 
-> **Dashboard Pemantau Ringan 9Router LLM Gateway untuk Ponsel Android**  
-> Dibuat khusus atas titah Yang Mulia Danas oleh abdi setia Darsam.
+A lightweight, mobile-first telemetry dashboard and PWA for [9Router](https://github.com/decolua/9router). Designed for fast mobile monitoring over local networks or WireGuard VPN without desktop dashboard bloat.
+
+<p align="center">
+  <img src="assets/screenshot.png" alt="9Router Mobile Monitor Screenshot" width="380" style="border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
+</p>
 
 ---
 
-## 📌 Ringkasan Proyek
+## Why I Built This
 
-**9Router Mobile Monitor** adalah antarmuka web ultra-ringan (*mobile-first PWA*) yang dirancang khusus untuk memantau aktivitas, perutean (*routing*), konsumsi token, efisiensi *cache*, dan riwayat permintaan *real-time* dari gerbang 9Router di NODIX1 langsung melalui layar ponsel Android.
+I run 9Router on my home server as a central gateway to route requests across multiple LLM providers, handle failovers, and track token usage. The built-in 9Router dashboard is great on desktop, but when I'm away from my desk and checking my phone over WireGuard, I wanted something:
 
-Aplikasi ini menggantikan dashboard desktop 9Router yang berat (@xyflow/react + Recharts) dengan visualisasi sirkuit ortogonal yang gesit, hemat memori, dan ramah sentuhan jari.
-
----
-
-## ⚡ Fitur Utama
-
-1. **Executive KPI Cards:**
-   - **Total Requests**: Total panggilan API hari ini.
-   - **Est. Cost**: Estimasi biaya terhemat berkat *caching*.
-   - **Input vs Cached Tokens**: Dilengkapi visual bar persentase efisiensi *Cache Hit Rate*.
-   - **Output Tokens**: Total token jawaban model.
-2. **Topologi Aliran Dinamis (Dynamic Sliding Queue):**
-   - **Simpul 9Router** bertengger kokoh di sisi kiri atas, sejajar horizontal persis dengan provider urutan pertama (#1).
-   - **Perpindahan Posisi Otomatis (*Auto-Elevate & Slide*):**
-     - Provider yang aktif langsung meluncur (*slide up*) ke posisi paling atas (#1), terhubung dengan garis horizontal lurus tanpa belokan (`M 90 26 H 138`).
-     - Jika ada provider lain yang aktif berikutnya, provider baru mengambil posisi #1 dan mendorong provider aktif sebelumnya ke posisi #2, #3, dst.
-     - Ketika sebuah provider selesai / mati, posisinya bergeser turun kembali ke kelompok *idle*, dan provider aktif di bawahnya otomatis naik menempati slot atas.
-     - Seluruh pergeseran posisi menggunakan transisi CSS *hardware-accelerated* yang halus (*silky smooth*).
-3. **Kawat Sirkuit Ortogonal Murni (Anti-Diagonal):**
-   - Garis penghubung bersudut siku 90° murni (horizontal $\rightarrow$ bus vertikal $\rightarrow$ horizontal).
-   - Status non-aktif: Kawat dan mata panah berwarna abu-abu (`#374151`).
-   - Status aktif: Kawat berubah hijau zamrud terang (`#10b981`), memancarkan denyut kilat (*running beam*), dan diiringi partikel panah (`►`) yang meluncur dinamis menyusuri kawat dari 9Router menuju provider target.
-4. **Recent Requests Log:**
-   - Log 10 permintaan terkini yang diperbarui otomatis setiap beberapa detik dari 9Router lokal.
-5. **Zero-Dependency Micro Server (`server.py`):**
-   - Menggunakan pustaka standar Python 3 (tanpa perlu `pip install`).
-   - Melayani berkas statis sekaligus bertindak sebagai *reverse proxy* untuk API 9Router port 20128.
-   - Mengikat port `20130` di `0.0.0.0`, siap diakses aman lewat WireGuard VPN (`http://10.10.10.1:20130`).
+1. **Lightweight & Fast:** Opens instantly without heavy client-side bundles or build steps.
+2. **Mobile-Optimized:** Fits small vertical screens neatly with touch-friendly controls.
+3. **Live Telemetry:** Shows which upstream provider is handling requests right now with animated circuit paths.
+4. **Zero Extra Dependencies:** Pure vanilla HTML/CSS/JS frontend paired with a tiny Python proxy script using only standard library modules.
 
 ---
 
-## 🚀 Cara Menjalankan
+## Key Features
 
-### 1. Menjalankan Server
-```bash
-cd /home/ubuntu/Github/9router-mobile-monitor
-python3 server.py
+- **Dynamic Priority Topology:** 
+  - The `9Router` core node sits at the top left, aligned horizontally with Slot #1.
+  - Active upstream providers automatically jump to the top of the queue in real-time as requests come in.
+  - Strictly orthogonal 90° circuit lines with running green beam animations indicate active in-flight traffic.
+  - Inactive providers smoothly slide down and rest in standby.
+- **Native Real-Time SSE Stream:** Connects directly to 9Router's `/api/usage/stream` for sub-second status updates.
+- **KPI Metrics & Cache Hit Tracking:** Displays Total Requests, Estimated Cost, Input Tokens, Cached Tokens, Cache Hit %, and Output Tokens.
+- **Time Horizon Filters:** Quickly switch between `Today`, `24h`, `7D`, `30D`, `60D`, and `All`.
+- **Live Request Feed:** A compact stream of recent model calls, prompt/completion token counters, status indicators, and elapsed time.
+- **Progressive Web App (PWA):** Includes `manifest.json` and a service worker. You can add it to your Android or iOS home screen for a full-screen, standalone app experience.
+
+---
+
+## Architecture
+
+```text
+  [ Android Phone / Browser ]
+              │
+              │  HTTP / PWA (Port 20130)
+              ▼
+    [ server.py Micro-Proxy ]
+              │
+              │  Internal API & SSE Forwarding
+              ▼
+       [ 9Router Core ]  (Port 20128)
 ```
-*Atau jalankan di latar belakang dengan PM2 / Systemd:*
+
+`server.py` serves the static frontend and transparently proxies `/api/*` endpoints and `/api/usage/stream` (SSE) to your local 9Router instance, avoiding CORS issues when accessing from mobile devices across different LAN/VPN subnets.
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.8+ (standard library only, no `pip install` required)
+- A running 9Router instance (defaulting to `http://127.0.0.1:20128`)
+
+### Running Locally
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/danskiv/9router-mobile-monitor.git
+   cd 9router-mobile-monitor
+   ```
+
+2. Start the server:
+   ```bash
+   python3 server.py
+   ```
+
+3. Open in your browser:
+   ```text
+   http://localhost:20130
+   ```
+   *(Or replace `localhost` with your server's LAN or WireGuard IP when accessing from your phone, e.g. `http://10.10.10.1:20130`)*
+
+---
+
+## Production Setup
+
+### Option 1: Running with PM2 (Recommended)
+
+If you already use PM2 on your server:
+
 ```bash
 pm2 start server.py --name "9router-mobile" --interpreter python3
+pm2 save
 ```
 
-### 2. Mengakses dari Ponsel Android
-1. Aktifkan **WireGuard VPN** di ponsel Android Yang Mulia (koneksi ke NODIX1 `10.10.10.1`).
-2. Buka peramban Chrome di Android dan tuju alamat:
-   ```
-   http://10.10.10.1:20130
-   ```
-3. Tekan menu titik tiga di Chrome $\rightarrow$ pilih **"Add to Home screen"** (Tambahkan ke Layar Utama).
-4. Aplikasi akan terpasang sebagai ikon PWA mandiri di beranda ponsel, tampil layar penuh (*fullscreen*) tanpa bilah peramban.
+### Option 2: Running as a Systemd Service
+
+Create a service file at `/etc/systemd/system/9router-mobile.service`:
+
+```ini
+[Unit]
+Description=9Router Mobile Monitor Service
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/Github/9router-mobile-monitor
+ExecStart=/usr/bin/python3 /home/ubuntu/Github/9router-mobile-monitor/server.py
+Restart=always
+RestartSec=3
+Environment=PORT=20130
+Environment=NINE_ROUTER_URL=http://127.0.0.1:20128
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start the service:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now 9router-mobile
+```
 
 ---
 
-## 📂 Struktur Berkas
+## Configuration
 
-```
-9router-mobile-monitor/
-├── index.html        # Antarmuka mandiri (HTML5 + CSS3 + Vanilla JS + SVG)
-├── server.py         # Micro-server Python + reverse proxy API 9Router
-├── manifest.json     # Konfigurasi PWA Android standalone
-├── README.md         # Dokumentasi teknis proyek
-└── DESIGN.md         # Spesifikasi desain, anti-slop, & token warna
+You can customize the listening port and 9Router target URL via environment variables:
+
+| Variable | Default | Description |
+| :--- | :--- | :--- |
+| `PORT` | `20130` | Port for the mobile monitor web interface |
+| `HOST` | `0.0.0.0` | Bind address |
+| `NINE_ROUTER_URL` | `http://127.0.0.1:20128` | URL of your upstream 9Router service |
+
+Example:
+```bash
+PORT=8080 NINE_ROUTER_URL=http://127.0.0.1:20128 python3 server.py
 ```
 
 ---
 
-## 🛡️ Standar Kualitas (Anti-Slop & Craftsmanship)
+## Installing on Android (PWA)
 
-- Memenuhi standar **Anti-Slop v3.2.18** dan **Hallmark**.
-- Tidak menggunakan metrik fiktif (*no fabricated data*) — seluruh angka ditarik langsung dari instans 9Router lokal.
-- Rasio kontras teks memenuhi WCAG AA ($\ge 4.5:1$).
-- Ukuran target sentuh tombol minimal 44px untuk kenyamanan jempol di layar HP.
+1. Connect your phone to your local Wi-Fi or WireGuard VPN.
+2. Open Chrome and navigate to `http://<your-server-ip>:20130`.
+3. Tap the three dots menu in the top-right corner.
+4. Select **Add to Home screen** (or **Install app**).
+5. The 9Router monitor will now launch from your home screen in full-screen mode without browser address bars.
+
+---
+
+## License
+
+[MIT](LICENSE) © [Danas Wara](https://github.com/danskiv)

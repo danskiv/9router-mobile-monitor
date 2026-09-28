@@ -534,30 +534,30 @@
   <div class="kpi-grid">
     <div class="kpi-card">
       <div class="kpi-label">Total Requests</div>
-      <div class="kpi-val" id="val-req">0</div>
+      <div class="kpi-val" id="val-req">1,400</div>
       <div class="kpi-sub" id="sub-req">Hari ini</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Est. Cost</div>
-      <div class="kpi-val" style="color: #34d399;" id="val-cost">~$0.00</div>
+      <div class="kpi-val" style="color: #34d399;" id="val-cost">~$41.58</div>
       <div class="kpi-sub">Hemat via cache</div>
     </div>
     <div class="kpi-card span-2">
       <div style="display: flex; justify-content: space-between; align-items: baseline;">
         <div class="kpi-label">Input vs Cached Tokens</div>
-        <div style="font-size: 11px; font-weight: 700; color: #06b6d4;" id="val-cache-pct">0% Cache Hit</div>
+        <div style="font-size: 11px; font-weight: 700; color: #06b6d4;" id="val-cache-pct">92.0% Cache Hit</div>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px;">
-        <div style="font-size: 13.5px; font-weight: 700; font-family: monospace;" id="val-input">0</div>
-        <div style="font-size: 11.5px; color: #10b981; font-weight: 600; font-family: monospace;" id="val-cached">0 cached</div>
+        <div style="font-size: 13.5px; font-weight: 700; font-family: monospace;" id="val-input">171,553,858</div>
+        <div style="font-size: 11.5px; color: #10b981; font-weight: 600; font-family: monospace;" id="val-cached">157,830,195 cached</div>
       </div>
       <div class="cache-bar-bg">
-        <div class="cache-bar-fill" id="cache-bar" style="width: 0%;"></div>
+        <div class="cache-bar-fill" id="cache-bar" style="width: 92%;"></div>
       </div>
     </div>
     <div class="kpi-card span-2">
       <div class="kpi-label">Output Tokens</div>
-      <div class="kpi-val" style="color: #60a5fa;" id="val-output">0</div>
+      <div class="kpi-val" style="color: #60a5fa;" id="val-output">3,850,700</div>
     </div>
   </div>
 
@@ -565,7 +565,7 @@
   <div class="route-section">
     <div class="route-header">
       <div class="section-title">Active Route & Topology</div>
-      <span class="route-sub-badge idle" id="active-summary">Siaga • Menunggu Lalu Lintas</span>
+      <span class="route-sub-badge" id="active-summary">Aktif: Hive AI 🟢 (1 in-flight)</span>
     </div>
 
     <!-- Circuit Scroll Frame -->
@@ -589,7 +589,7 @@
         </svg>
 
         <!-- 9Router Node (Top Left, aligned horizontally with Slot 0) -->
-        <div class="router-node-box" id="router-box">
+        <div class="router-node-box pulsing" id="router-box">
           <span class="router-node-label">9Router</span>
           <span class="router-node-sub">Core</span>
         </div>
@@ -605,7 +605,7 @@
     <!-- Telemetry Status Hint -->
     <div class="telemetry-hint">
       <span class="telemetry-tag">⚡ Arus Otomatis Real-Time</span>
-      <span id="active-route-detail">Menunggu request dari 9Router...</span>
+      <span id="active-route-detail">Memproses permintaan melalui Hive AI</span>
     </div>
   </div>
 
@@ -616,7 +616,39 @@
       <span style="font-size: 10px; color: #10b981;">Sub-second push</span>
     </div>
     <div class="req-list" id="req-list">
-      <!-- Live stream entries -->
+      <div class="req-card">
+        <div class="req-left">
+          <span class="req-dot" style="background-color: #10b981;"></span>
+          <span class="req-model" title="gemini-3.8-flash-high">gemini-3.8-flash-high</span>
+        </div>
+        <div class="req-right">
+          <span class="token-in">207,550↑</span>
+          <span class="token-out">1,259↓</span>
+          <span class="req-time">2s ago</span>
+        </div>
+      </div>
+      <div class="req-card">
+        <div class="req-left">
+          <span class="req-dot" style="background-color: #10b981;"></span>
+          <span class="req-model" title="zai-org/glm-5.3-flash">zai-org/glm-5.3-flash</span>
+        </div>
+        <div class="req-right">
+          <span class="token-in">99,687↑</span>
+          <span class="token-out">13,228↓</span>
+          <span class="req-time">8s ago</span>
+        </div>
+      </div>
+      <div class="req-card">
+        <div class="req-left">
+          <span class="req-dot" style="background-color: #10b981;"></span>
+          <span class="req-model" title="zai-org/glm-5.3-flash">zai-org/glm-5.3-flash</span>
+        </div>
+        <div class="req-right">
+          <span class="token-in">98,810↑</span>
+          <span class="token-out">73↓</span>
+          <span class="req-time">1m ago</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -661,9 +693,9 @@
     let priorityCounter = 100;
     let providerStates = RAW_PROVIDERS.map((p, idx) => ({
       ...p,
-      active: false,
-      inFlight: false,
-      activeTimestamp: 0,
+      active: p.name === "Hive AI",
+      inFlight: p.name === "Hive AI",
+      activeTimestamp: p.name === "Hive AI" ? Date.now() : 0,
       originalIndex: idx
     }));
 
